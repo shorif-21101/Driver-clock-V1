@@ -15,10 +15,7 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-// A layer of filtered noise that sweeps in frequency — the "turbine air" texture
-function playTurbineNoise({ duration, startTime = 0, gain = 0.05, filterStart, filterEnd, q = 0.9 }) {
-  const ctx = getAudioCtx();
-  // iOS only allows audio to start if it's triggered directly and synchronously
+// iOS only allows audio to start if it's triggered directly and synchronously
 // from a tap — calling this as the very first thing in a click handler
 // unlocks sound for the rest of the page.
 function unlockAudioContext() {
@@ -29,7 +26,14 @@ function unlockAudioContext() {
   source.connect(ctx.destination);
   source.start(0);
 }
+
+// A layer of filtered noise that sweeps in frequency — the "turbine air" texture
+function playTurbineNoise({ duration, startTime = 0, gain = 0.05, filterStart, filterEnd, q = 0.9 }) {
+  const ctx = getAudioCtx();
   const bufferSize = Math.floor(ctx.sampleRate * duration);
+
+
+  
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
