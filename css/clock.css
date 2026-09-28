@@ -9,7 +9,6 @@
   --text-secondary: #9497A6;
   --text-faint: #5B5E6B;
 
-  /* Single warm accent instead of the pink/blue gradient */
   --accent: #D97757;
   --accent-strong: #E4906F;
   --accent-soft: rgba(217, 119, 87, 0.14);
@@ -168,6 +167,22 @@ body {
 .ts-start-btn:hover { filter: brightness(1.08); }
 .ts-start-btn:active { transform: scale(0.98); }
 
+.ts-skip-btn {
+  margin-top: 14px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px;
+  transition: color .15s ease;
+  touch-action: manipulation;
+}
+
+.ts-skip-btn:hover { color: var(--accent); }
+
 /* ===================== MAIN SHIFT SCREEN ===================== */
 
 .shift-screen {
@@ -272,6 +287,7 @@ body {
 .target-row { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .target-label { font-size: 0.68rem; letter-spacing: 2px; color: var(--text-faint); font-weight: 700; text-transform: uppercase; }
 .target-pct { font-size: 0.8rem; font-weight: 800; color: var(--accent); }
+.target-row.no-target .target-pct { color: var(--text-faint); }
 
 .target-bar { height: 6px; border-radius: 4px; background: var(--track); overflow: hidden; flex-shrink: 0; }
 .target-bar-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 4px; transition: width .4s ease; }
@@ -379,7 +395,7 @@ details.override-details summary svg { width: 15px; height: 15px; color: var(--t
   color: var(--text-primary);
   padding: 12px;
   border-radius: 10px;
-  font-size: 16px; /* stops iOS zoom-on-focus */
+  font-size: 16px;
   font-weight: 700;
   outline: none;
   text-align: center;
@@ -423,3 +439,26 @@ details.override-details summary svg { width: 15px; height: 15px; color: var(--t
 
 .change-target-btn:hover { border-color: var(--accent); color: var(--accent); }
 .reset-day-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+
+
+
+
+.override-save-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-on-fill);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
+  touch-action: manipulation;
+}
+
+.override-save-btn:hover { filter: brightness(1.08); }
+.override-save-btn:active { transform: scale(0.98); }
+.override-save-btn:disabled { opacity: 0.35; cursor: not-allowed; }

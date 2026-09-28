@@ -10,7 +10,7 @@
 <body>
   <div class="app-shell">
 
-    <!-- Shown when today has no target set yet -->
+    <!-- Shown only when today hasn't been started yet at all -->
     <div id="targetSetup" class="target-setup-screen">
       <div class="target-setup-inner">
         <div class="ts-label">Set your goal</div>
@@ -27,6 +27,7 @@
           <button class="ts-preset" data-hours="12">12h</button>
         </div>
         <button id="tsStart" class="ts-start-btn">START DAY</button>
+        <button id="tsSkip" class="ts-skip-btn" type="button">Skip target for today</button>
       </div>
     </div>
 
@@ -85,7 +86,7 @@
         </div>
       </div>
 
-      <details class="override-details">
+            <details class="override-details">
         <summary>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -97,37 +98,22 @@
           Manual override
         </summary>
         <div class="override-panel">
-          <div class="override-hint" id="overrideHint">Clock out before adjusting today's time.</div>
-
-          <div class="override-section-label">Quick adjust</div>
-          <div class="quick-adjust-grid">
-            <button class="qa-btn qa-sub" data-delta="-1800">-30m</button>
-            <button class="qa-btn qa-sub" data-delta="-900">-15m</button>
-            <button class="qa-btn qa-add" data-delta="900">+15m</button>
-            <button class="qa-btn qa-add" data-delta="1800">+30m</button>
-          </div>
-
-          <div class="override-section-label">Custom time</div>
+          <div class="override-hint" id="overrideHint">Clock out before editing today's total.</div>
+          <div class="override-section-label">Set total time worked today</div>
           <div class="custom-time-row">
-            <input type="number" id="customHrs" placeholder="hrs" min="0" max="24">
-            <input type="number" id="customMin" placeholder="min" min="0" max="59">
+            <input type="number" id="customHrs" placeholder="hrs" min="0" max="24" inputmode="numeric">
+            <input type="number" id="customMin" placeholder="min" min="0" max="59" inputmode="numeric">
           </div>
-          <div class="custom-time-actions">
-            <button id="customSubtract" class="ct-btn ct-subtract">SUBTRACT</button>
-            <button id="customAdd" class="ct-btn ct-add">ADD</button>
-          </div>
-
-          <button id="changeTargetBtn" class="change-target-btn">CHANGE DAILY TARGET</button>
-          <button id="resetDayBtn" class="reset-day-btn">RESET DAY</button>
+          <button id="overrideSave" class="override-save-btn" type="button">SAVE</button>
         </div>
       </details>
     </div>
 
   </div>
 
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-   <script src="js/supabaseClient.js"></script>
-   <script src="js/sfx.js"></script>
-   <script src="js/clock.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/clock.js"></script>
 </body>
 </html>

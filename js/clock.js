@@ -41,6 +41,7 @@ async function fetchTodayRow() {
   return data;
 }
 
+// targetHours can be a number, or null for "skip target for today"
 async function startDay(targetHours) {
   const dateStr = getTodayDateStr();
   const existing = await fetchTodayRow();
@@ -62,7 +63,7 @@ async function startDay(targetHours) {
 async function toggleClock() {
   const dateStr = getTodayDateStr();
   const existing = await fetchTodayRow();
-  if (!existing) throw new Error("Set today's target first.");
+  if (!existing) throw new Error("Start today first.");
 
   if (existing.status === "Clocked In") {
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(existing.last_clock_in).getTime()) / 1000));
@@ -85,32 +86,22 @@ async function toggleClock() {
   return fetchTodayRow();
 }
 
-async function adjustAccumulated(deltaSeconds) {
-  const dateStr = getTodayDateStr();
-  const existing = await fetchTodayRow();
-  if (!existing) return;
-  const next = Math.max(0, (existing.accumulated_seconds || 0) + deltaSeconds);
+// Manual override: replaces today's total with exactly this many seconds.
+// Clocking in afterwards keeps adding on top of it.
+async function setAccumulated(totalSeconds) {
   const { error } = await supabaseClient
     .from("work_log")
-    .update({ accumulated_seconds: next, manual_override: true })
-    .eq("work_date", dateStr);
-  if (error) throw error;
-  return fetchTodayRow();
-}
-
-async function resetDay() {
-  const { error } = await supabaseClient
-    .from("work_log")
-    .delete()
+    .update({ accumulated_seconds: totalSeconds, manual_override: true })
     .eq("work_date", getTodayDateStr());
   if (error) throw error;
+  return fetchTodayRow();
 }
 
 // ==========================================
 // UI STATE
 // ==========================================
 
-let row = null;               // current Supabase row for today
+let row = null;               // today's Supabase row (null = today not started yet)
 let liveTickId = null;
 const RING_RADIUS = 115;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -142,7 +133,9 @@ function clearError() {
 }
 
 function render() {
-  if (!row || row.target_hours == null) {
+  // The target screen only shows when today has no row at all yet.
+  // Once "Start Day" or "Skip" has been used today, it never shows again that day.
+  if (!row) {
     el("targetSetup").style.display = "flex";
     el("shiftScreen").style.display = "none";
     clearInterval(liveTickId);
@@ -156,8 +149,7 @@ function render() {
   el("shiftDate").innerText = dateObj.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }).toUpperCase();
 
   const isOn = row.status === "Clocked In";
-  const badge = el("shiftBadge");
-  badge.classList.toggle("on", isOn);
+  el("shiftBadge").classList.toggle("on", isOn);
   el("shiftBadgeText").innerText = isOn ? "ON SHIFT" : "OFF SHIFT";
 
   el("ringButton").classList.toggle("on", isOn);
@@ -165,24 +157,26 @@ function render() {
   el("ringTimer").innerText = formatClock(currentSessionSeconds());
 
   const workedSeconds = currentWorkedSeconds();
-  const targetSeconds = row.target_hours * 3600;
-  const remainingSeconds = Math.max(0, targetSeconds - workedSeconds);
-  const pct = targetSeconds > 0 ? Math.min(100, (workedSeconds / targetSeconds) * 100) : 0;
+  const hasTarget = row.target_hours != null;
+  const targetSeconds = hasTarget ? row.target_hours * 3600 : 0;
+  const remainingSeconds = hasTarget ? Math.max(0, targetSeconds - workedSeconds) : 0;
+  const pct = hasTarget && targetSeconds > 0 ? Math.min(100, (workedSeconds / targetSeconds) * 100) : 0;
 
   el("statWorked").innerText = formatDuration(workedSeconds);
-  el("statRemaining").innerText = formatDuration(remainingSeconds);
-  el("statTarget").innerText = `${row.target_hours}h`;
-  el("targetPct").innerText = `${Math.round(pct)}%`;
+  el("statRemaining").innerText = hasTarget ? formatDuration(remainingSeconds) : "—";
+  el("statTarget").innerText = hasTarget ? `${row.target_hours}h` : "Not set";
+  el("targetPct").innerText = hasTarget ? `${Math.round(pct)}%` : "—";
   el("targetBarFill").style.width = `${pct}%`;
+  document.querySelector(".target-row").classList.toggle("no-target", !hasTarget);
 
   const ringProgress = el("ringProgress");
   ringProgress.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
   ringProgress.style.strokeDashoffset = `${RING_CIRCUMFERENCE * (1 - pct / 100)}`;
 
-  // Manual override controls are disabled while a session is running,
-  // so accumulated time never gets edited out from under a live clock-in.
-  const overrideControls = document.querySelectorAll(".qa-btn, #customSubtract, #customAdd, #customHrs, #customMin");
-  overrideControls.forEach((btn) => { btn.disabled = isOn; });
+  // Manual override is locked while a session is running, so the saved
+  // total can never clash with a live clock-in.
+  const overrideControls = document.querySelectorAll("#customHrs, #customMin, #overrideSave");
+  overrideControls.forEach((ctrl) => { ctrl.disabled = isOn; });
   el("overrideHint").style.display = isOn ? "block" : "none";
 
   clearInterval(liveTickId);
@@ -202,11 +196,10 @@ async function refresh() {
 }
 
 // ==========================================
-// TARGET SETUP SCREEN WIRING
+// TARGET SETUP SCREEN
 // ==========================================
 
 let tsHoursValue = 8;
-const TS_PRESET_VALUES = [6, 8, 10, 12];
 
 function renderTsHours() {
   el("tsHours").innerText = tsHoursValue;
@@ -236,21 +229,26 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  // ---- Target screen ----
   el("tsMinus").addEventListener("click", () => {
     tsHoursValue = Math.max(1, tsHoursValue - 1);
     renderTsHours();
   });
+
   el("tsPlus").addEventListener("click", () => {
     tsHoursValue = Math.min(16, tsHoursValue + 1);
     renderTsHours();
   });
+
   document.querySelectorAll(".ts-preset").forEach((btn) => {
     btn.addEventListener("click", () => {
       tsHoursValue = parseInt(btn.dataset.hours, 10);
       renderTsHours();
     });
   });
-   el("tsStart").addEventListener("click", async () => {
+
+  el("tsStart").addEventListener("click", async () => {
+    unlockAudioContext();
     try {
       row = await startDay(tsHoursValue);
       playTargetSetSound();
@@ -260,7 +258,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  el("tsSkip").addEventListener("click", async () => {
+    unlockAudioContext();
+    try {
+      row = await startDay(null);
+      render();
+    } catch (err) {
+      showError(err.message || String(err));
+    }
+  });
+
+  // ---- Clock ring ----
   el("ringButton").addEventListener("click", async () => {
+    unlockAudioContext();
     try {
       clearError();
       row = await toggleClock();
@@ -271,61 +281,30 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  document.querySelectorAll(".qa-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        row = await adjustAccumulated(parseInt(btn.dataset.delta, 10));
-        render();
-      } catch (err) {
-        showError(err.message || String(err));
-      }
-    });
-  });
+  // ---- Manual override (hours + minutes + save) ----
+  el("overrideSave").addEventListener("click", async () => {
+    const hrsRaw = el("customHrs").value;
+    const minRaw = el("customMin").value;
+    if (hrsRaw === "" && minRaw === "") return showError("Enter hours and/or minutes.");
 
-  el("customAdd").addEventListener("click", async () => {
-    const hrs = parseInt(el("customHrs").value, 10) || 0;
-    const mins = parseInt(el("customMin").value, 10) || 0;
-    if (!hrs && !mins) return showError("Enter hours and/or minutes.");
+    const hrs = Math.min(24, Math.max(0, parseInt(hrsRaw, 10) || 0));
+    const mins = Math.min(59, Math.max(0, parseInt(minRaw, 10) || 0));
+
     try {
-      row = await adjustAccumulated((hrs * 3600) + (mins * 60));
+      clearError();
+      row = await setAccumulated((hrs * 3600) + (mins * 60));
       el("customHrs").value = "";
       el("customMin").value = "";
+      el("overrideSave").closest("details").open = false;
       render();
     } catch (err) {
       showError(err.message || String(err));
     }
   });
 
-  el("customSubtract").addEventListener("click", async () => {
-    const hrs = parseInt(el("customHrs").value, 10) || 0;
-    const mins = parseInt(el("customMin").value, 10) || 0;
-    if (!hrs && !mins) return showError("Enter hours and/or minutes.");
-    try {
-      row = await adjustAccumulated(-((hrs * 3600) + (mins * 60)));
-      el("customHrs").value = "";
-      el("customMin").value = "";
-      render();
-    } catch (err) {
-      showError(err.message || String(err));
-    }
-  });
-
-  el("changeTargetBtn").addEventListener("click", () => {
-    openTargetSetup(row ? row.target_hours : 8);
-  });
+  // ---- Tap the Target card to change today's target ----
   el("statTargetCard").addEventListener("click", () => {
     openTargetSetup(row ? row.target_hours : 8);
-  });
-
-  el("resetDayBtn").addEventListener("click", async () => {
-    if (!confirm("Reset today completely? This deletes all tracked hours and your target.")) return;
-    try {
-      await resetDay();
-      row = null;
-      render();
-    } catch (err) {
-      showError(err.message || String(err));
-    }
   });
 
   refresh();
