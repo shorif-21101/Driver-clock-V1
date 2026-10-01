@@ -462,3 +462,152 @@ details.override-details summary svg { width: 15px; height: 15px; color: var(--t
 .override-save-btn:hover { filter: brightness(1.08); }
 .override-save-btn:active { transform: scale(0.98); }
 .override-save-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+
+/* ===================== ARC REACTOR GLOW ===================== */
+
+.reactor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(66vw, 250px);
+  height: min(66vw, 250px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.reactor div { position: absolute; border-radius: 50%; }
+
+/* keep the original ring + button above the glow and still tappable */
+.ring-svg { position: relative; z-index: 1; }
+.ring-center { z-index: 2; }
+
+.rx-layer { inset: 0; transition: opacity .8s ease; }
+.rx-off { opacity: 1; }
+.rx-on { opacity: 0; }
+.reactor.on .rx-off { opacity: 0; }
+.reactor.on .rx-on { opacity: 1; }
+
+.rx-segments { display: none; }
+
+/* ---------- OFF: soft, faded orange glow ---------- */
+
+.rx-halo {
+  inset: -24px;
+  background: radial-gradient(closest-side, transparent 72%, rgba(217,119,87,.30) 84%, rgba(217,119,87,.10) 93%, transparent 100%);
+  animation: rx-breathe 4s ease-in-out infinite;
+}
+
+.rx-comet {
+  inset: 3px;
+  border: 2px solid rgba(217,119,87,.28);
+  box-shadow: 0 0 16px rgba(217,119,87,.30), inset 0 0 16px rgba(217,119,87,.14);
+  animation: rx-breathe 4s ease-in-out infinite;
+}
+
+/* ---------- ON: bright orange light burst ---------- */
+
+.rx-plasma-glow {
+  inset: -44px;
+  background: radial-gradient(closest-side, transparent 60%, rgba(255,140,80,.60) 74%, rgba(217,119,87,.28) 86%, transparent 100%);
+}
+
+.rx-core {
+  inset: 0;
+  background: radial-gradient(closest-side, transparent 55%, rgba(255,140,80,.18) 90%, transparent 100%);
+}
+
+.rx-plasma-a {
+  inset: 3px;
+  border: 3px solid rgba(255,175,125,.95);
+  box-shadow:
+    0 0 12px 2px rgba(255,140,80,.85),
+    0 0 36px 8px rgba(217,119,87,.50),
+    inset 0 0 20px rgba(255,140,80,.45);
+}
+
+.rx-plasma-b {
+  inset: -46px;
+  opacity: .6;
+  background: repeating-conic-gradient(rgba(255,170,120,.55) 0deg 1.2deg, transparent 1.2deg 10deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 68%, #000 76%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 68%, #000 76%, transparent 100%);
+  animation: rx-spin 24s linear infinite;
+}
+
+/* the flash + pulsing only start when the clock turns ON, so they sync with the sound */
+.reactor.on .rx-plasma-glow {
+  animation: rx-ignite .9s ease-out, rx-pulse 1.4s ease-in-out .9s infinite;
+}
+.reactor.on .rx-core {
+  animation: rx-pulse 1.4s ease-in-out infinite;
+}
+.reactor.on .rx-plasma-a {
+  animation: rx-flicker 2.4s ease-in-out infinite;
+}
+
+@keyframes rx-spin { to { transform: rotate(360deg); } }
+
+@keyframes rx-breathe {
+  0%, 100% { opacity: .55; transform: scale(.985); }
+  50%      { opacity: 1;   transform: scale(1.02); }
+}
+
+@keyframes rx-pulse {
+  0%, 100% { opacity: .75; transform: scale(.97); }
+  50%      { opacity: 1;   transform: scale(1.05); }
+}
+
+@keyframes rx-ignite {
+  0%   { opacity: 0; transform: scale(.7); }
+  35%  { opacity: 1; transform: scale(1.25); }
+  100% { opacity: .85; transform: scale(1); }
+}
+
+@keyframes rx-flicker {
+  0%, 100% { opacity: .9; }
+  20% { opacity: 1; }
+  38% { opacity: .78; }
+  55% { opacity: 1; }
+  72% { opacity: .88; }
+}
+
+/* ===== FIX: remove square outline, soften the glow ===== */
+
+.ring-center,
+.ring-center:focus,
+.ring-center:focus-visible,
+.ring-center:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* remove the sun-like rays */
+.rx-plasma-b { display: none; }
+
+/* OFF: very soft, faded glow */
+.rx-halo {
+  inset: -30px;
+  background: radial-gradient(closest-side, transparent 70%, rgba(217,119,87,.16) 80%, rgba(217,119,87,.06) 91%, transparent 100%);
+}
+.rx-comet {
+  border: 1px solid rgba(217,119,87,.18);
+  box-shadow: 0 0 22px rgba(217,119,87,.20), inset 0 0 20px rgba(217,119,87,.10);
+}
+
+/* ON: brighter, but still soft and diffused */
+.rx-plasma-glow {
+  inset: -50px;
+  background: radial-gradient(closest-side, transparent 58%, rgba(255,140,80,.30) 70%, rgba(217,119,87,.14) 84%, transparent 100%);
+}
+.rx-core {
+  background: radial-gradient(closest-side, transparent 60%, rgba(255,140,80,.10) 92%, transparent 100%);
+}
+.rx-plasma-a {
+  border: 2px solid rgba(255,175,125,.55);
+  box-shadow:
+    0 0 18px 2px rgba(255,140,80,.45),
+    0 0 50px 10px rgba(217,119,87,.25),
+    inset 0 0 26px rgba(255,140,80,.25);
+}

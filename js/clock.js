@@ -152,7 +152,8 @@ function render() {
   el("shiftBadge").classList.toggle("on", isOn);
   el("shiftBadgeText").innerText = isOn ? "ON SHIFT" : "OFF SHIFT";
 
-  el("ringButton").classList.toggle("on", isOn);
+ el("ringButton").classList.toggle("on", isOn);
+  el("reactor").classList.toggle("on", isOn);
   el("ringHint").innerText = isOn ? "TAP TO CLOCK OUT" : "TAP TO CLOCK IN";
   el("ringTimer").innerText = formatClock(currentSessionSeconds());
 
