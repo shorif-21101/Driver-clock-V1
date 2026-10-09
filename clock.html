@@ -17,8 +17,18 @@
 <body>
   <div class="app-shell">
 
+    <!-- Loading screen: visible until today's data is known -->
+    <div id="loadingScreen" class="loading-screen">
+      <div class="ld-reactor">
+        <div class="ld-ring"></div>
+        <div class="ld-ring ld-ring-2"></div>
+        <div class="ld-core"></div>
+      </div>
+      <div class="ld-text">INITIALIZING</div>
+    </div>
+
     <!-- Shown only when today hasn't been started yet at all -->
-    <div id="targetSetup" class="target-setup-screen">
+    <div id="targetSetup" class="target-setup-screen" style="display:none;">
       <div class="target-setup-inner">
         <div class="ts-label">Set your goal</div>
         <h1 class="ts-title">TODAY'S TARGET</h1>

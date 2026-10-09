@@ -26,6 +26,10 @@
           </svg>
           <span id="copyLinkLabel">Copy Clock Link</span>
         </button>
+                   <button id="btnWeekPill" class="monthly-pill week-pill" type="button" aria-label="Open weekly hours">
+          <span class="pill-label">Week total</span>
+          <span id="weeklyTotal" class="pill-value">0h 00m</span>
+        </button>
         <div class="monthly-pill">
           <span class="pill-label">Monthly total</span>
           <span id="monthlyTotal" class="pill-value">0h 00m</span>
@@ -49,8 +53,27 @@
       <div id="calendarGrid" class="calendar-grid"></div>
     </div>
 
-    <a href="clock.html" class="clock-link">Open Clock Page →</a>
+   
   </div>
+
+
+    <!-- Weekly hours slide-in panel -->
+  <div id="weekBackdrop" class="week-backdrop"></div>
+  <aside id="weekPanel" class="week-panel" aria-hidden="true">
+    <div class="wp-head">
+      <div>
+        <div class="wp-title">WEEKLY HOURS</div>
+        <div class="wp-sub">Last 10 weeks · Mon – Sun</div>
+      </div>
+      <button id="btnCloseWeek" class="wp-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="wp-legend">
+      <span><i class="lg lg-purple"></i>60h+</span>
+      <span><i class="lg lg-green"></i>55–60h</span>
+      <span><i class="lg lg-red"></i>Below 55h</span>
+    </div>
+    <div id="weekList" class="week-list"></div>
+  </aside>
 
   <div id="editModal" class="modal-overlay hidden">
     <div class="modal-card">

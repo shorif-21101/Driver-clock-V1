@@ -103,6 +103,31 @@ async function setAccumulated(totalSeconds) {
 
 let row = null;               // today's Supabase row (null = today not started yet)
 let liveTickId = null;
+// ---- Local cache so the screen shows instantly on reopen ----
+const CACHE_KEY = "shiftRowCache";
+
+function saveCachedRow(r) {
+  try {
+    if (r) localStorage.setItem(CACHE_KEY, JSON.stringify({ date: getTodayDateStr(), row: r }));
+    else localStorage.removeItem(CACHE_KEY);
+  } catch (e) {}
+}
+
+function loadCachedRow() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed.date === getTodayDateStr() ? parsed.row : null; // ignore yesterday's cache
+  } catch (e) { return null; }
+}
+
+function hideLoader() {
+  const l = el("loadingScreen");
+  if (!l || l.classList.contains("hidden")) return;
+  l.classList.add("hidden");
+  setTimeout(() => { l.style.display = "none"; }, 400);
+}
 const RING_RADIUS = 115;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
@@ -133,6 +158,7 @@ function clearError() {
 }
 
 function render() {
+  saveCachedRow(row);
   // The target screen only shows when today has no row at all yet.
   // Once "Start Day" or "Skip" has been used today, it never shows again that day.
   if (!row) {
@@ -188,11 +214,25 @@ function render() {
 
 async function refresh() {
   clearError();
+
+  // 1) Instant paint from cache (if today was already started on this phone)
+  const cached = loadCachedRow();
+  if (cached) {
+    row = cached;
+    render();
+    hideLoader();
+  }
+
+  // 2) Confirm with Supabase in the background
   try {
     row = await fetchTodayRow();
     render();
   } catch (err) {
+    // If we have no cache, we still can't show a wrong screen, so fall back
+    // to the shift screen only when a row exists.
     showError(err.message || String(err));
+  } finally {
+    hideLoader();
   }
 }
 
@@ -306,6 +346,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // ---- Tap the Target card to change today's target ----
   el("statTargetCard").addEventListener("click", () => {
     openTargetSetup(row ? row.target_hours : 8);
+  });
+
+  // Re-sync quietly whenever you come back to the app
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refresh();
   });
 
   refresh();
