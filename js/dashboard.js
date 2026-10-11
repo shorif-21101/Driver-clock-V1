@@ -2,12 +2,14 @@ let monthData = {};
 let currentDate = new Date();
 currentDate.setDate(1);
 let selectedDateStr = "";
+let selectedIsHoliday = false;
 
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
   document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
   document.getElementById("btnCancelEdit").addEventListener("click", closeModal);
-  document.getElementById("btnSaveEdit").addEventListener("click", saveEdit);
+    document.getElementById("btnSaveEdit").addEventListener("click", saveEdit);
+  document.getElementById("btnHoliday").addEventListener("click", toggleHoliday);
   loadMonth();
 });
 
@@ -73,7 +75,7 @@ async function fetchMonthData(year, monthIndex) {
   const lastDay = toIsoDate(new Date(year, monthIndex + 1, 0));
   const { data, error } = await supabaseClient
     .from("work_log")
-    .select("work_date, accumulated_seconds, target_hours")
+        .select("work_date, accumulated_seconds, target_hours, is_holiday")
     .gte("work_date", firstDay)
     .lte("work_date", lastDay);
   if (error) throw error;
@@ -130,8 +132,11 @@ function renderCalendar() {
     cell.className = "day-cell";
     if (dateStr === todayStr) cell.classList.add("today");
 
-    let content;
-    if (row && row.accumulated_seconds) {
+        let content;
+    if (row && row.is_holiday && !row.accumulated_seconds) {
+      cell.classList.add("holiday");
+      content = "Holiday";
+    } else if (row && row.accumulated_seconds) {
       totalSeconds += row.accumulated_seconds;
       content = formatDuration(row.accumulated_seconds);
       const hoursWorked = row.accumulated_seconds / 3600;
@@ -153,6 +158,10 @@ function renderCalendar() {
 
 function openModal(dateStr, row) {
   selectedDateStr = dateStr;
+  selectedIsHoliday = !!(row && row.is_holiday && !row.accumulated_seconds);
+  const hBtn = document.getElementById("btnHoliday");
+  hBtn.innerText = selectedIsHoliday ? "Remove holiday" : "Mark as holiday";
+  hBtn.classList.toggle("active", selectedIsHoliday);
   const dateObj = new Date(dateStr + "T00:00:00");
   document.getElementById("modalDateLabel").innerText =
     dateObj.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
@@ -188,7 +197,7 @@ async function saveEdit() {
     if (existing) {
       const { error } = await supabaseClient
         .from("work_log")
-        .update({ accumulated_seconds: totalSeconds, status: "Clocked Out", last_clock_in: null, manual_override: true })
+                .update({ accumulated_seconds: totalSeconds, status: "Clocked Out", last_clock_in: null, manual_override: true, is_holiday: false })
         .eq("work_date", dateStr);
       if (error) throw error;
     } else {
@@ -309,3 +318,42 @@ document.addEventListener("DOMContentLoaded", function () {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeWeekPanel(); });
   loadWeeks();
 });
+
+
+
+
+
+async function toggleHoliday() {
+  const dateStr = selectedDateStr;
+  const makeHoliday = !selectedIsHoliday;
+
+  closeModal();
+  toggleLoading(true);
+  try {
+    const { data: existing, error: fetchErr } = await supabaseClient
+      .from("work_log")
+      .select("work_date")
+      .eq("work_date", dateStr)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+
+    const fields = makeHoliday
+      ? { accumulated_seconds: 0, status: "Clocked Out", last_clock_in: null, is_holiday: true }
+      : { is_holiday: false };
+
+    if (existing) {
+      const { error } = await supabaseClient.from("work_log").update(fields).eq("work_date", dateStr);
+      if (error) throw error;
+    } else if (makeHoliday) {
+      const { error } = await supabaseClient.from("work_log").insert({ work_date: dateStr, ...fields });
+      if (error) throw error;
+    }
+
+    await loadMonth();
+    await loadWeeks();
+  } catch (err) {
+    showError(err.message || String(err));
+  } finally {
+    toggleLoading(false);
+  }
+}

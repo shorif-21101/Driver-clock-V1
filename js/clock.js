@@ -270,6 +270,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+
+    // ---- Dashboard button ----
+  const goDashboard = () => { window.location.href = "index.html"; };
+  el("btnDashboard").addEventListener("click", goDashboard);
+  el("btnDashboard").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") goDashboard();
+  });
+
   // ---- Target screen ----
   el("tsMinus").addEventListener("click", () => {
     tsHoursValue = Math.max(1, tsHoursValue - 1);

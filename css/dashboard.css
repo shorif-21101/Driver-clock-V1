@@ -472,3 +472,32 @@ body {
 @media (max-width: 700px) {
   .week-panel { width: 88vw; min-width: 0; }
 }
+
+
+/* ===== HOLIDAY ===== */
+:root {
+  --status-holiday: #4FC3D0;
+  --status-holiday-line: #1F9CAB;
+  --status-holiday-soft: rgba(18, 120, 135, 0.22);
+}
+
+.day-cell.holiday { border-bottom-color: var(--status-holiday-line); background: var(--status-holiday-soft); }
+.day-cell.holiday .time-record { color: var(--status-holiday); font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; }
+.day-cell.today.holiday { background: var(--status-holiday-soft) !important; }
+
+.btn-holiday {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(31, 156, 171, 0.5);
+  background: var(--status-holiday-soft);
+  color: var(--status-holiday);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: .5px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.btn-holiday:hover { background: rgba(18, 120, 135, 0.35); }
+.btn-holiday.active { background: var(--status-holiday-line); color: #04181B; }

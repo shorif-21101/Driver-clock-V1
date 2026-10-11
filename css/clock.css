@@ -666,3 +666,18 @@ details.override-details summary svg { width: 15px; height: 15px; color: var(--t
 @keyframes ld-spin  { to { transform: rotate(360deg); } }
 @keyframes ld-pulse { 0%,100% { transform: scale(.8); opacity: .6; } 50% { transform: scale(1.1); opacity: 1; } }
 @keyframes ld-blink { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+
+/* ===== Dashboard button next to the shift badge ===== */
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.dash-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.dash-badge svg { width: 12px; height: 12px; flex-shrink: 0; }
+.dash-badge:hover { border-color: #D97757; color: #D97757; }
+.dash-badge:active { transform: scale(.97); }
