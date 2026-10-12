@@ -137,7 +137,7 @@ body {
 
 .weekday-row {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   border-bottom: 1px solid var(--surface-border);
   flex-shrink: 0;
 }
@@ -155,14 +155,16 @@ body {
 .calendar-grid {
   flex-grow: 1;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 1px;
   background: var(--surface-border);
 }
 
 .day-cell {
   background: #0d0e13;
+  min-width: 0;
+  overflow: hidden;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -501,3 +503,52 @@ body {
 }
 .btn-holiday:hover { background: rgba(18, 120, 135, 0.35); }
 .btn-holiday.active { background: var(--status-holiday-line); color: #04181B; }
+
+
+
+
+/* ===== MOBILE: let the page scroll, compact calendar ===== */
+@media (max-width: 700px) {
+  html, body {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body {
+    padding: max(12px, env(safe-area-inset-top)) 10px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .dash-shell { height: auto; gap: 12px; }
+
+  .dash-header { align-items: flex-start; gap: 10px; }
+  .header-actions { gap: 6px; }
+  .copy-link-btn { padding: 6px 12px; font-size: 0.7rem; }
+  .monthly-pill { padding: 6px 12px; gap: 8px; }
+  .pill-label { font-size: 0.54rem; letter-spacing: 1px; }
+  .pill-value { font-size: 0.88rem; }
+
+  .month-nav { gap: 14px; }
+  .month-year { min-width: 150px; font-size: 1.05rem; }
+
+  .calendar-wrapper { flex-grow: 0; }
+
+  .weekday-row div {
+    padding: 8px 0;
+    font-size: 0.56rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* only draw the rows the month actually needs, each at least 74px tall */
+  .calendar-grid {
+    grid-template-rows: none;
+    grid-auto-rows: minmax(74px, auto);
+  }
+
+  .day-cell { padding: 6px 4px; border-bottom-width: 2px; }
+  .date-number { font-size: 0.72rem; }
+  .time-record { font-size: 0.7rem; line-height: 1.15; white-space: nowrap; }
+  .day-cell.missing-data .time-record { font-size: 0.58rem; white-space: normal; }
+  .day-cell.holiday .time-record { font-size: 0.54rem; letter-spacing: 0; }
+}
