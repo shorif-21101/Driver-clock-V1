@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0b0f">
+  <title>Uber Shift Core</title>
+  <link rel="stylesheet" href="css/clock.css">
+
+    <meta name="theme-color" content="#0a0b0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clock">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- Loading screen: visible until today's data is known -->
+    <div id="loadingScreen" class="loading-screen">
+      <div class="ld-reactor">
+        <div class="ld-ring"></div>
+        <div class="ld-ring ld-ring-2"></div>
+        <div class="ld-core"></div>
+      </div>
+      <div class="ld-text">INITIALIZING</div>
+    </div>
+
+    <!-- Shown only when today hasn't been started yet at all -->
+    <div id="targetSetup" class="target-setup-screen" style="display:none;">
+      <div class="target-setup-inner">
+        <div class="ts-label">Set your goal</div>
+        <h1 class="ts-title">TODAY'S TARGET</h1>
+        <div class="ts-stepper">
+          <button id="tsMinus" class="ts-circle-btn" aria-label="Decrease">−</button>
+          <div class="ts-value"><span id="tsHours">8</span><span class="ts-unit">h</span></div>
+          <button id="tsPlus" class="ts-circle-btn" aria-label="Increase">+</button>
+        </div>
+        <div class="ts-presets" id="tsPresets">
+          <button class="ts-preset" data-hours="6">6h</button>
+          <button class="ts-preset active" data-hours="8">8h</button>
+          <button class="ts-preset" data-hours="10">10h</button>
+          <button class="ts-preset" data-hours="12">12h</button>
+        </div>
+        <button id="tsStart" class="ts-start-btn">START DAY</button>
+        <button id="tsSkip" class="ts-skip-btn" type="button">Skip target for today</button>
+      </div>
+    </div>
+
+    <!-- Main shift screen -->
+    <div id="shiftScreen" class="shift-screen" style="display:none;">
+      <header class="shift-header">
+        <div>
+          <div class="shift-logo">UBER<span class="slash">//</span>SHIFT</div>
+          <div class="shift-date" id="shiftDate">—</div>
+        </div>
+               <div class="header-right">
+          <div class="shift-badge dash-badge" id="btnDashboard" role="link" tabindex="0" aria-label="Open dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>DASHBOARD</span>
+          </div>
+          <div class="shift-badge" id="shiftBadge">
+            <span class="dot"></span><span id="shiftBadgeText">OFF SHIFT</span>
+          </div>
+        </div>
+      </header>
+
+      <div id="errorBanner" class="error-banner" style="display:none;"></div>
+
+      <div class="ring-wrap">
+        <!-- ARC REACTOR EFFECT LAYERS -->
+        <div class="reactor" id="reactor">
+          <div class="rx-segments"></div>
+          <div class="rx-layer rx-off">
+            <div class="rx-halo"></div>
+            <div class="rx-comet"></div>
+          </div>
+          <div class="rx-layer rx-on">
+            <div class="rx-plasma-glow"></div>
+            <div class="rx-core"></div>
+            <div class="rx-plasma-a"></div>
+            <div class="rx-plasma-b"></div>
+          </div>
+        </div>
+        <svg class="ring-svg" viewBox="0 0 260 260">
+          <circle class="ring-bg" cx="130" cy="130" r="115"></circle>
+          <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="115"></circle>
+        </svg>
+        <button class="ring-center" id="ringButton">
+          <svg class="ring-icon" id="ringIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          <div class="ring-timer" id="ringTimer">00:00:00</div>
+          <div class="ring-hint" id="ringHint">TAP TO CLOCK IN</div>
+        </button>
+      </div>
+
+      <div class="target-row">
+        <span class="target-label">Daily target</span>
+        <span class="target-pct" id="targetPct">0%</span>
+      </div>
+      <div class="target-bar"><div class="target-bar-fill" id="targetBarFill"></div></div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Worked today</div>
+          <div class="stat-value" id="statWorked">0h 00m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value" id="statRemaining">0h 00m</div>
+        </div>
+        <div class="stat-card clickable" id="statTargetCard">
+          <div class="stat-label">Target
+            <svg class="pencil-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+            </svg>
+          </div>
+          <div class="stat-value" id="statTarget">0h</div>
+        </div>
+      </div>
+
+            <details class="override-details">
+        <summary>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          Manual override
+        </summary>
+        <div class="override-panel">
+          <div class="override-hint" id="overrideHint">Clock out before editing today's total.</div>
+          <div class="override-section-label">Set total time worked today</div>
+          <div class="custom-time-row">
+            <input type="number" id="customHrs" placeholder="hrs" min="0" max="24" inputmode="numeric">
+            <input type="number" id="customMin" placeholder="min" min="0" max="59" inputmode="numeric">
+          </div>
+          <button id="overrideSave" class="override-save-btn" type="button">SAVE</button>
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/clock.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0b0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clock">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>Analytics</title>
+  <link rel="stylesheet" href="css/analytics.css">
+  <link rel="stylesheet" href="css/sidebar.css">
+</head>
+<body>
+  <div class="an-shell">
+
+    <header class="an-header">
+      <div>
+        <div class="an-logo">UBER<span class="slash">//</span>SHIFT</div>
+        <div class="an-subtitle">ANALYTICS</div>
+      </div>
+      <div class="mode-toggle" id="modeToggle" data-mode="monthly">
+        <span class="mode-thumb"></span>
+        <button type="button" data-mode="monthly" class="active">MONTHLY</button>
+        <button type="button" data-mode="weekly">WEEKLY</button>
+      </div>
+    </header>
+
+    <div id="errorBanner" class="error-banner" style="display:none;"></div>
+
+    <section class="verdict neutral" id="verdict">
+      <div class="v-glow"></div>
+      <div class="v-left">
+               <div class="v-tag">HOURS CHECK</div>
+        <div class="v-title" id="vTitle">LOADING…</div>
+        <div class="v-text" id="vText"></div>
+        <div class="v-text v-text2" id="vText2"></div>
+      </div>
+      <div class="v-right">
+        <div class="v-delta" id="vDelta">—</div>
+                <div class="v-delta-label">vs usual</div>
+      </div>
+    </section>
+
+    <div class="kpi-row" id="kpiRow"></div>
+
+    
+
+        <section class="chart-card">
+      <div class="cc-head">
+        <div>
+          <div class="cc-title" id="c2Title">—</div>
+          <div class="cc-sub" id="c2Sub"></div>
+        </div>
+        <div class="tax-nav" id="taxNav">
+          <button id="btnPrevTax" class="tax-btn" type="button" aria-label="Previous tax year">&larr;</button>
+          <span id="taxLabel" class="tax-label">—</span>
+          <button id="btnNextTax" class="tax-btn" type="button" aria-label="Next tax year">&rarr;</button>
+        </div>
+      </div>
+      <div class="cc-body"><canvas id="chart2"></canvas></div>
+    </section>
+
+  </div>
+
+  <div class="an-loading" id="anLoading"><div class="an-spinner"></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/sidebar.js"></script>
+</body>
+</html>
