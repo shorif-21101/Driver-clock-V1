@@ -117,7 +117,8 @@ function renderCalendar() {
   if (startOffset === -1) startOffset = 6;
 
   const todayStr = toIsoDate(new Date());
-  let totalSeconds = 0;
+   let totalSeconds = 0;
+  let underDays = 0;
 
   for (let i = 0; i < startOffset; i++) {
     const cell = document.createElement("div");
@@ -140,7 +141,7 @@ function renderCalendar() {
       totalSeconds += row.accumulated_seconds;
       content = formatDuration(row.accumulated_seconds);
       const hoursWorked = row.accumulated_seconds / 3600;
-      if (hoursWorked < 8) cell.classList.add("under-target");
+           if (hoursWorked < 8) { cell.classList.add("under-target"); underDays++; }
       else if (hoursWorked < 10) cell.classList.add("target-met");
       else cell.classList.add("over-target");
     } else {
@@ -153,7 +154,8 @@ function renderCalendar() {
     grid.appendChild(cell);
   }
 
-  document.getElementById("monthlyTotal").innerText = formatDuration(totalSeconds);
+    document.getElementById("monthlyTotal").innerText = formatDuration(totalSeconds);
+  document.getElementById("underDays").innerText = underDays;
 }
 
 function openModal(dateStr, row) {

@@ -552,3 +552,9 @@ body {
   .day-cell.missing-data .time-record { font-size: 0.58rem; white-space: normal; }
   .day-cell.holiday .time-record { font-size: 0.54rem; letter-spacing: 0; }
 }
+
+
+
+/* Under-8h days pill */
+.under-pill .pill-value { color: #E5484D; }
+.header-actions { flex-wrap: wrap; justify-content: flex-end; }
