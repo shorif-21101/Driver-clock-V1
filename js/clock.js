@@ -157,6 +157,26 @@ function clearError() {
   b.innerText = "";
 }
 
+// Daily target bar: starts a dull dark green, gets brighter and glows more as you near the target
+function paintTargetBar(pct, hasTarget) {
+  const fill = el("targetBarFill");
+  const label = el("targetPct");
+  if (!hasTarget || pct <= 0) {
+    fill.style.background = "";
+    fill.style.boxShadow = "";
+    label.style.color = "";
+    fill.classList.remove("done");
+    return;
+  }
+  const g = Math.pow(Math.min(pct, 100) / 100, 1.6);   // 0 → 1, ramps up late
+  const tail = `hsl(150 45% ${13 + 6 * g}%)`;
+  const tip = `hsl(142 ${55 + 45 * g}% ${28 + 32 * g}%)`;
+  fill.style.background = `linear-gradient(90deg, ${tail}, ${tip})`;
+  fill.style.boxShadow = `0 0 ${3 + 20 * g}px hsla(142, 100%, 55%, ${0.08 + 0.75 * g})`;
+  label.style.color = tip;
+  fill.classList.toggle("done", pct >= 100);
+}
+
 function render() {
   saveCachedRow(row);
   // The target screen only shows when today has no row at all yet.
@@ -180,7 +200,7 @@ function render() {
 
  el("ringButton").classList.toggle("on", isOn);
   el("reactor").classList.toggle("on", isOn);
-  el("ringHint").innerText = isOn ? "TAP TO CLOCK OUT" : "TAP TO CLOCK IN";
+    el("ringHint").innerText = isOn ? "CLOCK OUT" : "CLOCK IN";
   el("ringTimer").innerText = formatClock(currentSessionSeconds());
 
   const workedSeconds = currentWorkedSeconds();
@@ -193,7 +213,9 @@ function render() {
   el("statRemaining").innerText = hasTarget ? formatDuration(remainingSeconds) : "—";
   el("statTarget").innerText = hasTarget ? `${row.target_hours}h` : "Not set";
   el("targetPct").innerText = hasTarget ? `${Math.round(pct)}%` : "—";
-  el("targetBarFill").style.width = `${pct}%`;
+    el("targetBarFill").style.width = `${pct}%`;
+  if (el("ringPct")) el("ringPct").innerText = hasTarget ? `${Math.round(pct)}%` : "—";
+  paintTargetBar(pct, hasTarget);
   document.querySelector(".target-row").classList.toggle("no-target", !hasTarget);
 
   const ringProgress = el("ringProgress");

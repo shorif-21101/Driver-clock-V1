@@ -8,12 +8,10 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
   document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
   document.getElementById("btnCancelEdit").addEventListener("click", closeModal);
-    document.getElementById("btnSaveEdit").addEventListener("click", saveEdit);
+  document.getElementById("btnSaveEdit").addEventListener("click", saveEdit);
   document.getElementById("btnHoliday").addEventListener("click", toggleHoliday);
-  loadMonth();
-});
 
-
+  // ---- Copy Clock Link ----
   document.getElementById("btnCopyClockLink").addEventListener("click", async () => {
     const clockUrl = new URL("clock.html", window.location.href).href;
     try {
@@ -36,14 +34,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1800);
   });
 
+  loadMonth();
+});
 
-
-
-
-
-
-
-
+// ==========================================
+// HELPERS
+// ==========================================
 
 function toIsoDate(d) {
   const y = d.getFullYear();
@@ -70,12 +66,16 @@ function showError(msg) {
   setTimeout(() => { b.style.display = "none"; }, 5000);
 }
 
+// ==========================================
+// MONTH DATA + CALENDAR
+// ==========================================
+
 async function fetchMonthData(year, monthIndex) {
   const firstDay = toIsoDate(new Date(year, monthIndex, 1));
   const lastDay = toIsoDate(new Date(year, monthIndex + 1, 0));
   const { data, error } = await supabaseClient
     .from("work_log")
-        .select("work_date, accumulated_seconds, target_hours, is_holiday")
+    .select("work_date, accumulated_seconds, target_hours, is_holiday")
     .gte("work_date", firstDay)
     .lte("work_date", lastDay);
   if (error) throw error;
@@ -117,8 +117,8 @@ function renderCalendar() {
   if (startOffset === -1) startOffset = 6;
 
   const todayStr = toIsoDate(new Date());
-   let totalSeconds = 0;
-  let underDays = 0;
+  let totalSeconds = 0;
+  let underDays = 0; // days worked that are below 8 hours (the red days)
 
   for (let i = 0; i < startOffset; i++) {
     const cell = document.createElement("div");
@@ -133,7 +133,7 @@ function renderCalendar() {
     cell.className = "day-cell";
     if (dateStr === todayStr) cell.classList.add("today");
 
-        let content;
+    let content;
     if (row && row.is_holiday && !row.accumulated_seconds) {
       cell.classList.add("holiday");
       content = "Holiday";
@@ -141,7 +141,7 @@ function renderCalendar() {
       totalSeconds += row.accumulated_seconds;
       content = formatDuration(row.accumulated_seconds);
       const hoursWorked = row.accumulated_seconds / 3600;
-           if (hoursWorked < 8) { cell.classList.add("under-target"); underDays++; }
+      if (hoursWorked < 8) { cell.classList.add("under-target"); underDays++; }
       else if (hoursWorked < 10) cell.classList.add("target-met");
       else cell.classList.add("over-target");
     } else {
@@ -154,9 +154,13 @@ function renderCalendar() {
     grid.appendChild(cell);
   }
 
-    document.getElementById("monthlyTotal").innerText = formatDuration(totalSeconds);
+  document.getElementById("monthlyTotal").innerText = formatDuration(totalSeconds);
   document.getElementById("underDays").innerText = underDays;
 }
+
+// ==========================================
+// EDIT MODAL
+// ==========================================
 
 function openModal(dateStr, row) {
   selectedDateStr = dateStr;
@@ -199,7 +203,7 @@ async function saveEdit() {
     if (existing) {
       const { error } = await supabaseClient
         .from("work_log")
-                .update({ accumulated_seconds: totalSeconds, status: "Clocked Out", last_clock_in: null, manual_override: true, is_holiday: false })
+        .update({ accumulated_seconds: totalSeconds, status: "Clocked Out", last_clock_in: null, manual_override: true, is_holiday: false })
         .eq("work_date", dateStr);
       if (error) throw error;
     } else {
@@ -208,7 +212,7 @@ async function saveEdit() {
         .insert({ work_date: dateStr, accumulated_seconds: totalSeconds, status: "Clocked Out", manual_override: true });
       if (error) throw error;
     }
-       await loadMonth();
+    await loadMonth();
     await loadWeeks(); // keep week total + panel in sync after an edit
   } catch (err) {
     showError(err.message || String(err));
@@ -216,7 +220,6 @@ async function saveEdit() {
     toggleLoading(false);
   }
 }
-
 
 // ==========================================
 // WEEKLY HOURS (Mon–Sun) + SLIDE-IN PANEL
@@ -321,9 +324,9 @@ document.addEventListener("DOMContentLoaded", function () {
   loadWeeks();
 });
 
-
-
-
+// ==========================================
+// HOLIDAY TOGGLE
+// ==========================================
 
 async function toggleHoliday() {
   const dateStr = selectedDateStr;
