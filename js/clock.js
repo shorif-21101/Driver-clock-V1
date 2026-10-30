@@ -103,6 +103,7 @@ async function setAccumulated(totalSeconds) {
 
 let row = null;               // today's Supabase row (null = today not started yet)
 let liveTickId = null;
+
 // ---- Local cache so the screen shows instantly on reopen ----
 const CACHE_KEY = "shiftRowCache";
 
@@ -128,8 +129,6 @@ function hideLoader() {
   l.classList.add("hidden");
   setTimeout(() => { l.style.display = "none"; }, 400);
 }
-const RING_RADIUS = 115;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 function currentWorkedSeconds() {
   if (!row) return 0;
@@ -157,23 +156,27 @@ function clearError() {
   b.innerText = "";
 }
 
-// Daily target bar: starts a dull dark green, gets brighter and glows more as you near the target
+// Daily target: status word + bar glow (the bar glows warmer as you near the target)
 function paintTargetBar(pct, hasTarget) {
   const fill = el("targetBarFill");
-  const label = el("targetPct");
+
+  let status;
+  if (!hasTarget) status = "No target set";
+  else if (pct <= 0) status = "Not started";
+  else if (pct < 25) status = "Warming up";
+  else if (pct < 50) status = "Building up";
+  else if (pct < 75) status = "Good progress";
+  else if (pct < 100) status = "Almost there";
+  else status = "Target reached";
+  el("tpTitle").innerText = status;
+
   if (!hasTarget || pct <= 0) {
-    fill.style.background = "";
     fill.style.boxShadow = "";
-    label.style.color = "";
     fill.classList.remove("done");
     return;
   }
   const g = Math.pow(Math.min(pct, 100) / 100, 1.6);   // 0 → 1, ramps up late
-  const tail = `hsl(150 45% ${13 + 6 * g}%)`;
-  const tip = `hsl(142 ${55 + 45 * g}% ${28 + 32 * g}%)`;
-  fill.style.background = `linear-gradient(90deg, ${tail}, ${tip})`;
-  fill.style.boxShadow = `0 0 ${3 + 20 * g}px hsla(142, 100%, 55%, ${0.08 + 0.75 * g})`;
-  label.style.color = tip;
+  fill.style.boxShadow = `0 0 ${4 + 16 * g}px rgba(255, 190, 120, ${0.10 + 0.55 * g})`;
   fill.classList.toggle("done", pct >= 100);
 }
 
@@ -191,16 +194,16 @@ function render() {
   el("targetSetup").style.display = "none";
   el("shiftScreen").style.display = "flex";
 
-  const dateObj = new Date();
-  el("shiftDate").innerText = dateObj.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }).toUpperCase();
+  el("shiftDate").innerText = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
   const isOn = row.status === "Clocked In";
   el("shiftBadge").classList.toggle("on", isOn);
-  el("shiftBadgeText").innerText = isOn ? "ON SHIFT" : "OFF SHIFT";
+  el("shiftBadgeText").innerText = isOn ? "On shift" : "Off shift";
 
- el("ringButton").classList.toggle("on", isOn);
+  el("glassCard").classList.toggle("on", isOn);
+  el("ringButton").classList.toggle("on", isOn);
   el("reactor").classList.toggle("on", isOn);
-    el("ringHint").innerText = isOn ? "CLOCK OUT" : "CLOCK IN";
+  el("ringHint").innerText = isOn ? "Clock out" : "Clock in";
   el("ringTimer").innerText = formatClock(currentSessionSeconds());
 
   const workedSeconds = currentWorkedSeconds();
@@ -213,14 +216,9 @@ function render() {
   el("statRemaining").innerText = hasTarget ? formatDuration(remainingSeconds) : "—";
   el("statTarget").innerText = hasTarget ? `${row.target_hours}h` : "Not set";
   el("targetPct").innerText = hasTarget ? `${Math.round(pct)}%` : "—";
-    el("targetBarFill").style.width = `${pct}%`;
-  if (el("ringPct")) el("ringPct").innerText = hasTarget ? `${Math.round(pct)}%` : "—";
+  el("targetBarFill").style.width = `${pct}%`;
   paintTargetBar(pct, hasTarget);
-  document.querySelector(".target-row").classList.toggle("no-target", !hasTarget);
-
-  const ringProgress = el("ringProgress");
-  ringProgress.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
-  ringProgress.style.strokeDashoffset = `${RING_CIRCUMFERENCE * (1 - pct / 100)}`;
+  el("targetBlock").classList.toggle("no-target", !hasTarget);
 
   // Manual override is locked while a session is running, so the saved
   // total can never clash with a live clock-in.
@@ -250,8 +248,6 @@ async function refresh() {
     row = await fetchTodayRow();
     render();
   } catch (err) {
-    // If we have no cache, we still can't show a wrong screen, so fall back
-    // to the shift screen only when a row exists.
     showError(err.message || String(err));
   } finally {
     hideLoader();
@@ -285,20 +281,12 @@ function openTargetSetup(prefillHours) {
 document.addEventListener("DOMContentLoaded", function () {
   if (!supabaseClient) {
     document.body.innerHTML =
-      '<div style="padding:24px;color:#F5F5F4;font-family:sans-serif;line-height:1.5;">' +
+      '<div style="padding:24px;color:#EAF0F4;font-family:sans-serif;line-height:1.5;">' +
       "<strong>Supabase isn't configured yet.</strong><br>Open <code>js/supabaseClient.js</code> and paste in your " +
       "Project URL and anon key from your Supabase dashboard (Project Settings &gt; API), then reload this page." +
       "</div>";
     return;
   }
-
-
-    // ---- Dashboard button ----
-  const goDashboard = () => { window.location.href = "index.html"; };
-  el("btnDashboard").addEventListener("click", goDashboard);
-  el("btnDashboard").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") goDashboard();
-  });
 
   // ---- Target screen ----
   el("tsMinus").addEventListener("click", () => {
@@ -339,7 +327,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ---- Clock ring ----
+  // ---- Clock button ----
   el("ringButton").addEventListener("click", async () => {
     unlockAudioContext();
     try {
@@ -373,8 +361,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ---- Tap the Target card to change today's target ----
-  el("statTargetCard").addEventListener("click", () => {
+  // ---- "Edit target" reopens the target screen without resetting today's progress ----
+  el("btnEditTarget").addEventListener("click", () => {
     openTargetSetup(row ? row.target_hours : 8);
   });
 
